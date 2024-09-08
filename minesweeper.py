@@ -111,67 +111,60 @@ class MinesweeperAI():
         for sentence in self.knowledge:
             sentence.mark_safe(cell)
 
-     def add_knowledge(self, cell, count):
+    def add_knowledge(self, cell, count):
     # Mark the cell as a move made
         self.moves_made.add(cell)
 
     # Mark the cell as safe
         self.mark_safe(cell)
 
-    # Get neighbors of the cell
+    # Add a new sentence to the knowledge base based on the cell and count
         neighbors = self.get_neighbors(cell)
-        neighbors = neighbors - self.moves_made  # Exclude already made moves
         new_sentence = Sentence(neighbors, count)
-
-    # Remove known safes and mines from the new sentence
-        for safe in self.safes:
-            new_sentence.mark_safe(safe)
-        for mine in self.mines:
-            new_sentence.mark_mine(mine)
     
-    # Add the new sentence if it's not empty
+    # Remove known mines and safes from the new sentence
+        for mine in self.mines.copy():
+            new_sentence.mark_mine(mine)
+            for safe in self.safes.copy():
+                new_sentence.mark_safe(safe)
+    
         if new_sentence.cells:
             self.knowledge.append(new_sentence)
-
-    # Keep updating knowledge base
+    
+    # Keep updating knowledge base by combining sentences
         updated = True
         while updated:
             updated = False
             safes_to_mark = set()
             mines_to_mark = set()
-
-        # Infer safes and mines from current knowledge
             for sentence in self.knowledge:
                 safes_to_mark |= sentence.known_safes()
                 mines_to_mark |= sentence.known_mines()
-
+        
             for safe in safes_to_mark:
-                if safe not in self.safes:
-                    self.mark_safe(safe)
+                if self.mark_safe(safe):
                     updated = True
-            for mine in mines_to_mark:
-                if mine not in self.mines:
-                    self.mark_mine(mine)
-                    updated = True
-
-        # Combine sentences to draw new inferences
-            new_knowledge = []
-            for s1 in self.knowledge:
-                for s2 in self.knowledge:
-                    if s1 != s2 and s1.cells.issubset(s2.cells):
+                    for mine in mines_to_mark:
+                        if self.mark_mine(mine):
+                            updated = True
+        
+        # Iterate over pairs of sentences to infer new information
+            for s1 in self.knowledge.copy():
+                if s1.cells == set():
+                    continue
+                for s2 in self.knowledge.copy():
+                    if s1 == s2 or s2.cells == set():
+                        continue
+                    if s1.cells.issubset(s2.cells):
                         new_cells = s2.cells - s1.cells
                         new_count = s2.count - s1.count
-                        inferred_sentence = Sentence(new_cells, new_count)
-                        if inferred_sentence not in self.knowledge and inferred_sentence not in new_knowledge:
-                            new_knowledge.append(inferred_sentence)
+                        new_sentence = Sentence(new_cells, new_count)
+                        if new_sentence not in self.knowledge:
+                            self.knowledge.append(new_sentence)
                             updated = True
 
-        # Add new knowledge to the knowledge base
-            self.knowledge.extend(new_knowledge)
-
-    # Clean up empty sentences
+    # Remove empty sentences
         self.knowledge = [s for s in self.knowledge if s.cells]
-
 
     def get_neighbors(self, cell):
         neighbors = set()
