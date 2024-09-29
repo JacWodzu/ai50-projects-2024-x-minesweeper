@@ -111,44 +111,52 @@ class MinesweeperAI:
                     neighbors.add((i, j))
         return neighbors
 
-    def infer_new_knowledge(self):
-        """
-        Repeatedly checks the knowledge base to mark any cells as safe or as mines
-        based on the known information. Also performs inference by checking for 
-        subset relationships between sentences.
-        """
-        updated = True
-        while updated:
-            updated = False
+   def infer_new_knowledge(self):
+    """
+    Repeatedly checks the knowledge base to mark any cells as safe or as mines
+    based on the known information. Also performs inference by checking for 
+    subset relationships between sentences.
+    """
+    updated = True
+    while updated:
+        updated = False
 
-            # First pass: mark known mines and safes
-            for sentence in self.knowledge.copy():
-                known_mines = sentence.known_mines()
-                known_safes = sentence.known_safes()
+        # First pass: mark known mines and safes
+        to_mark_mines = []
+        to_mark_safes = []
 
-                # Mark known mines
-                for mine in known_mines:
-                    if mine not in self.mines:
-                        self.mark_mine(mine)
-                        updated = True
+        for sentence in self.knowledge.copy():
+            known_mines = sentence.known_mines()
+            known_safes = sentence.known_safes()
 
-                # Mark known safes
-                for safe in known_safes:
-                    if safe not in self.safes:
-                        self.mark_safe(safe)
-                        updated = True
+            # Gather known mines and safes for later marking
+            to_mark_mines.extend(known_mines)
+            to_mark_safes.extend(known_safes)
 
-            # Second pass: check for subsets and create new sentences
-            for sentence1 in self.knowledge.copy():
-                for sentence2 in self.knowledge.copy():
-                    if sentence1 != sentence2 and sentence1.cells.issubset(sentence2.cells):
-                        new_count = sentence2.count - sentence1.count
-                        new_cells = sentence2.cells - sentence1.cells
-                        if new_cells and new_count >= 0:  # Ensure non-negative count
-                            new_sentence = Sentence(new_cells, new_count)
-                            if new_sentence not in self.knowledge:
-                                self.knowledge.append(new_sentence)
-                                updated = True
+        # Apply marked mines
+        for mine in to_mark_mines:
+            if mine not in self.mines:
+                self.mark_mine(mine)
+                updated = True
+
+        # Apply marked safes
+        for safe in to_mark_safes:
+            if safe not in self.safes:
+                self.mark_safe(safe)
+                updated = True
+
+        # Second pass: check for subsets and create new sentences
+        for sentence1 in self.knowledge.copy():
+            for sentence2 in self.knowledge.copy():
+                if sentence1 != sentence2 and sentence1.cells.issubset(sentence2.cells):
+                    new_count = sentence2.count - sentence1.count
+                    new_cells = sentence2.cells - sentence1.cells
+                    if new_cells and new_count >= 0:  # Ensure non-negative count
+                        new_sentence = Sentence(new_cells, new_count)
+                        if new_sentence not in self.knowledge:
+                            self.knowledge.append(new_sentence)
+                            updated = True
+
 
     def make_safe_move(self):
         """
