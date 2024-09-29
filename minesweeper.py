@@ -111,7 +111,7 @@ class MinesweeperAI:
                     neighbors.add((i, j))
         return neighbors
 
-      def infer_new_knowledge(self):
+    def infer_new_knowledge(self):
         new_mines = set()
         new_safes = set()
     
@@ -133,9 +133,6 @@ class MinesweeperAI:
     
         for safe in new_safes:
             self.mark_safe(safe)
-
-
-
 
 
     def make_safe_move(self):
