@@ -1,9 +1,56 @@
 import itertools
 import random
 
+class Minesweeper:
+    """
+    Minesweeper game representation
+    """
+
+    def __init__(self, height=8, width=8, mines=8):
+        # Set initial width, height, and number of mines
+        self.height = height
+        self.width = width
+        self.mines = set()
+        self.board = [[False for _ in range(width)] for _ in range(height)]  # Create a board for mines
+
+    def print(self):
+        """
+        Prints a text-based representation
+        of where mines are located.
+        """
+        for i in range(self.height):
+            print("--" * self.width + "-")
+            for j in range(self.width):
+                print("| X" if self.board[i][j] else "|  ", end="")
+            print("|")
+        print("--" * self.width + "-")
+
+    def nearby_mines(self, cell):
+        """
+        Returns the number of mines that are
+        within one row and column of a given cell,
+        not including the cell itself.
+        """
+        count = 0
+        for i in range(cell[0] - 1, cell[0] + 2):
+            for j in range(cell[1] - 1, cell[1] + 2):
+                if (i, j) == cell:
+                    continue
+                if 0 <= i < self.height and 0 <= j < self.width:
+                    if self.board[i][j]:
+                        count += 1
+        return count
+
+    def won(self):
+        """
+        Checks if all mines have been flagged.
+        """
+        return self.mines == self.mines_found
+
+
 class Sentence:
     """
-    Logical statement about a Minesweeper game.
+    Logical statement about a Minesweeper game
     A sentence consists of a set of board cells,
     and a count of the number of those cells which are mines.
     """
@@ -14,7 +61,7 @@ class Sentence:
 
     def __eq__(self, other):
         return self.cells == other.cells and self.count == other.count
-
+    
     def __str__(self):
         return f"{self.cells} = {self.count}"
 
@@ -22,13 +69,17 @@ class Sentence:
         """
         Returns the set of all cells in self.cells that are known to be mines.
         """
-        return {cell for cell in self.cells if cell in self.cells and self.count == len(self.cells)}
+        if len(self.cells) == self.count:
+            return set(self.cells)
+        return set()
 
     def known_safes(self):
         """
         Returns the set of all cells in self.cells that are known to be safe.
         """
-        return {cell for cell in self.cells if self.count == 0}
+        if self.count == 0:
+            return set(self.cells)
+        return set()
 
     def mark_mine(self, cell):
         """
@@ -44,6 +95,7 @@ class Sentence:
         """
         if cell in self.cells:
             self.cells.remove(cell)
+
 
 class MinesweeperAI:
     def __init__(self, height=8, width=8):
@@ -80,24 +132,24 @@ class MinesweeperAI:
         4) Mark any additional cells as safe or as mines if it can be concluded.
         5) Add any new inferences to the AI's knowledge base.
         """
-        # Step 1: Mark the cell as a move made
+        # Mark the cell as a move made
         self.moves_made.add(cell)
 
-        # Step 2: Mark the cell as safe
+        # Mark the cell as safe
         self.mark_safe(cell)
 
-        # Step 3: Determine the neighboring cells
+        # Determine the neighboring cells
         neighbors = self.get_neighbors(cell)
 
-        # Step 4: Remove known safes and mines from the neighboring cells
+        # Remove known safes and mines from the neighboring cells
         unknown_neighbors = neighbors - self.safes - self.mines
 
-        # Step 5: Add the new sentence to the knowledge base
+        # Add the new sentence to the knowledge base if there are unknown neighbors
         if unknown_neighbors:
             new_sentence = Sentence(unknown_neighbors, count)
             self.knowledge.append(new_sentence)
 
-        # Step 6: Infer new knowledge
+        # Infer new knowledge from the current knowledge base
         self.infer_new_knowledge()
 
     def get_neighbors(self, cell):
@@ -126,17 +178,17 @@ class MinesweeperAI:
                 known_mines = sentence.known_mines()
                 known_safes = sentence.known_safes()
 
-                # Mark known mines
-                for mine in known_mines:
-                    if mine not in self.mines:
-                        self.mark_mine(mine)
-                        updated = True
+                if known_mines:
+                    for mine in known_mines:
+                        if mine not in self.mines:
+                            self.mark_mine(mine)
+                            updated = True
 
-                # Mark known safes
-                for safe in known_safes:
-                    if safe not in self.safes:
-                        self.mark_safe(safe)
-                        updated = True
+                if known_safes:
+                    for safe in known_safes:
+                        if safe not in self.safes:
+                            self.mark_safe(safe)
+                            updated = True
 
             # Second pass: check for subsets and create new sentences
             for sentence1 in self.knowledge.copy():
@@ -165,9 +217,11 @@ class MinesweeperAI:
         Returns a random move (i, j).
         This function will be called if a safe move is not possible.
         The move must not be a move that has already been made.
+        The move must not be a move that is known to be a mine.
+        If no such moves are possible, the function should return None.
         """
-        all_possible_moves = set((i, j) for i in range(self.height) for j in range(self.width))
-        valid_moves = all_possible_moves - self.moves_made - self.mines
-        if valid_moves:
-            return random.choice(list(valid_moves))
+        all_possible_moves = {(i, j) for i in range(self.height) for j in range(self.width)}
+        available_moves = all_possible_moves - self.moves_made - self.mines
+        if available_moves:
+            return random.choice(list(available_moves))
         return None
