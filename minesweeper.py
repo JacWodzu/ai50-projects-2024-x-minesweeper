@@ -112,56 +112,21 @@ class MinesweeperAI:
         return neighbors
 
    def infer_new_knowledge(self):
-    """
-    Repeatedly checks the knowledge base to mark any cells as safe or as mines
-    based on the known information. Also performs inference by checking for 
-    subset relationships between sentences.
-    """
-    updated = True
-    while updated:
-        updated = False
+    # Copy sets to avoid modifying during iteration
+    known_mines = self.mines.copy()
+    known_safes = self.safes.copy()
+    
+    # Process known mines
+    for mine in known_mines:
+        # Perform your logic with mines
+        # Example: if certain conditions are met, you might want to remove or add items
+        pass  # Replace with actual logic
 
-        # First pass: mark known mines and safes
-        to_mark_mines = []
-        to_mark_safes = []
+    # Process known safes
+    for safe in known_safes:
+        # Perform your logic with safes
+        pass  # Replace with actual logic
 
-        # Create temporary lists to store known mines and safes
-        for sentence in self.knowledge:
-            known_mines = sentence.known_mines()
-            known_safes = sentence.known_safes()
-
-            # Gather known mines and safes for later marking
-            to_mark_mines.extend(known_mines)
-            to_mark_safes.extend(known_safes)
-
-        # Apply marked mines
-        for mine in to_mark_mines:
-            if mine not in self.mines:
-                self.mark_mine(mine)
-                updated = True
-
-        # Apply marked safes
-        for safe in to_mark_safes:
-            if safe not in self.safes:
-                self.mark_safe(safe)
-                updated = True
-
-        # Second pass: check for subsets and create new sentences
-        # Using a new temporary list to avoid modifying self.knowledge during iteration
-        new_sentences = []
-        for sentence1 in self.knowledge:
-            for sentence2 in self.knowledge:
-                if sentence1 != sentence2 and sentence1.cells.issubset(sentence2.cells):
-                    new_count = sentence2.count - sentence1.count
-                    new_cells = sentence2.cells - sentence1.cells
-                    if new_cells and new_count >= 0:  # Ensure non-negative count
-                        new_sentence = Sentence(new_cells, new_count)
-                        if new_sentence not in self.knowledge and new_sentence not in new_sentences:
-                            new_sentences.append(new_sentence)
-                            updated = True
-
-        # Add all new sentences to the knowledge base at once
-        self.knowledge.extend(new_sentences)
 
 
 
