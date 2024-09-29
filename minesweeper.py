@@ -22,13 +22,13 @@ class Sentence:
         """
         Returns the set of all cells in self.cells that are known to be mines.
         """
-        return self.cells if len(self.cells) == self.count else set()
+        return {cell for cell in self.cells if cell in self.cells and self.count == len(self.cells)}
 
     def known_safes(self):
         """
         Returns the set of all cells in self.cells that are known to be safe.
         """
-        return self.cells if self.count == 0 else set()
+        return {cell for cell in self.cells if self.count == 0}
 
     def mark_mine(self, cell):
         """
@@ -166,7 +166,7 @@ class MinesweeperAI:
         This function will be called if a safe move is not possible.
         The move must not be a move that has already been made.
         """
-        all_possible_moves = {(i, j) for i in range(self.height) for j in range(self.width)}
+        all_possible_moves = set((i, j) for i in range(self.height) for j in range(self.width))
         valid_moves = all_possible_moves - self.moves_made - self.mines
         if valid_moves:
             return random.choice(list(valid_moves))
