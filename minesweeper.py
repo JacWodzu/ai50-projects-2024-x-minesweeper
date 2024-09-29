@@ -125,7 +125,8 @@ class MinesweeperAI:
         to_mark_mines = []
         to_mark_safes = []
 
-        for sentence in self.knowledge.copy():
+        # Create temporary lists to store known mines and safes
+        for sentence in self.knowledge:
             known_mines = sentence.known_mines()
             known_safes = sentence.known_safes()
 
@@ -146,16 +147,22 @@ class MinesweeperAI:
                 updated = True
 
         # Second pass: check for subsets and create new sentences
-        for sentence1 in self.knowledge.copy():
-            for sentence2 in self.knowledge.copy():
+        # Using a new temporary list to avoid modifying self.knowledge during iteration
+        new_sentences = []
+        for sentence1 in self.knowledge:
+            for sentence2 in self.knowledge:
                 if sentence1 != sentence2 and sentence1.cells.issubset(sentence2.cells):
                     new_count = sentence2.count - sentence1.count
                     new_cells = sentence2.cells - sentence1.cells
                     if new_cells and new_count >= 0:  # Ensure non-negative count
                         new_sentence = Sentence(new_cells, new_count)
-                        if new_sentence not in self.knowledge:
-                            self.knowledge.append(new_sentence)
+                        if new_sentence not in self.knowledge and new_sentence not in new_sentences:
+                            new_sentences.append(new_sentence)
                             updated = True
+
+        # Add all new sentences to the knowledge base at once
+        self.knowledge.extend(new_sentences)
+
 
 
     def make_safe_move(self):
