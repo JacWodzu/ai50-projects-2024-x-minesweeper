@@ -112,28 +112,31 @@ class MinesweeperAI:
         return neighbors
 
     def infer_new_knowledge(self):
-        new_mines = set()
-        new_safes = set()
-    
-    # Iterate over a copy of the current known mines
-        for mine in self.mines.copy():
-        # Logic to infer new mines
-            if some_condition_for_mine:  # Replace with actual logic
-                new_mines.add(mine)
-    
-    # Iterate over a copy of the current known safes
-        for safe in self.safes.copy():
-        # Logic to infer new safes
-            if some_condition_for_safe:  # Replace with actual logic
-                new_safes.add(safe)
+    # Example logic for inferring new knowledge
+        for sentence in self.knowledge:
+            # For each sentence in the knowledge base, check conditions
+            if len(sentence.cells) == sentence.count:  # All cells are mines
+                for cell in sentence.cells:
+                    self.mines.add(cell)
+            elif sentence.count == 0:  # All cells are safe
+                for cell in sentence.cells:
+                        self.safes.add(cell)
 
-    # Update the main sets after iteration
-        for mine in new_mines:
-            self.mark_mine(mine)
-    
-        for safe in new_safes:
-            self.mark_safe(safe)
+    # Now check for new safe cells
+        for cell in self.cells:
+            if cell not in self.mines and cell not in self.safes:
+                # Check your logic to determine if this cell is now safe
+                # e.g., compare with current knowledge, counts, etc.
+                if self.is_safe(cell):  # Implement your actual logic
+                    self.safes.add(cell)
 
+
+    def is_safe(self, cell):
+        # Your logic to determine if the cell is safe
+        # For example:
+            return (
+                # Check surrounding cells and the knowledge base to determine if this cell can be considered safe
+                )
 
     def make_safe_move(self):
         """
