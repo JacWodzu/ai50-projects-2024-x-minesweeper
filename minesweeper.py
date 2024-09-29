@@ -49,10 +49,13 @@ class MinesweeperAI:
     def __init__(self, height=8, width=8):
         self.height = height
         self.width = width
-        self.moves_made = set()
-        self.mines = set()
-        self.safes = set()
-        self.knowledge = []
+        self.moves_made = set()    # Track all moves made
+        self.mines = set()         # Track cells that are mines
+        self.safes = set()         # Track cells that are safe
+        self.knowledge = []        # Knowledge base of sentences about the game
+
+        # Define self.cells as all cells in the grid
+        self.cells = set((i, j) for i in range(self.height) for j in range(self.width))
 
     def mark_mine(self, cell):
         """
@@ -71,34 +74,23 @@ class MinesweeperAI:
             sentence.mark_safe(cell)
 
     def add_knowledge(self, cell, count):
-        """
-        Called when the AI is told that a given safe cell has a certain number of
-        neighboring mines. This function should:
-        1) Mark the cell as a move made.
-        2) Mark the cell as safe.
-        3) Add a new sentence to the AI's knowledge base based on the value of `cell` and `count`.
-        4) Mark any additional cells as safe or as mines if it can be concluded.
-        5) Add any new inferences to the AI's knowledge base.
-        """
-        # Step 1: Mark the cell as a move made
-        self.moves_made.add(cell)
+        self.moves_made.add(cell)  # Mark the move as made
+        self.safes.add(cell)       # The cell is safe since we just revealed it
 
-        # Step 2: Mark the cell as safe
-        self.mark_safe(cell)
+    # Create a new sentence based on the neighboring cells
+        neighbors = set()
+        for i in range(cell[0] - 1, cell[0] + 2):
+            for j in range(cell[1] - 1, cell[1] + 2):
+                if (i, j) != cell and 0 <= i < self.height and 0 <= j < self.width:
+                    neighbors.add((i, j))
+    
+    # Add the new sentence to the knowledge base
+        new_sentence = Sentence(neighbors, count)
+        self.knowledge.append(new_sentence)
 
-        # Step 3: Determine the neighboring cells
-        neighbors = self.get_neighbors(cell)
-
-        # Step 4: Remove known safes and mines from the neighboring cells
-        unknown_neighbors = neighbors - self.safes - self.mines
-
-        # Step 5: Add the new sentence to the knowledge base
-        if unknown_neighbors:
-            new_sentence = Sentence(unknown_neighbors, count)
-            self.knowledge.append(new_sentence)
-
-        # Step 6: Infer new knowledge
+    # Try to infer any new information after adding this knowledge
         self.infer_new_knowledge()
+
 
     def get_neighbors(self, cell):
         """
@@ -111,24 +103,24 @@ class MinesweeperAI:
                     neighbors.add((i, j))
         return neighbors
 
+    
     def infer_new_knowledge(self):
-    # Example logic for inferring new knowledge
+        # Example logic for inferring new knowledge
         for sentence in self.knowledge:
-            # For each sentence in the knowledge base, check conditions
-            if len(sentence.cells) == sentence.count:  # All cells are mines
+            if len(sentence.cells) == sentence.count:  # All cells in sentence are mines
                 for cell in sentence.cells:
                     self.mines.add(cell)
-            elif sentence.count == 0:  # All cells are safe
-                for cell in sentence.cells:
+            elif sentence.count == 0:  # All cells in sentence are safe
+                    for cell in sentence.cells:
                         self.safes.add(cell)
 
-    # Now check for new safe cells
+    # Now check for new safe cells across all cells on the board
         for cell in self.cells:
             if cell not in self.mines and cell not in self.safes:
-                # Check your logic to determine if this cell is now safe
-                # e.g., compare with current knowledge, counts, etc.
-                if self.is_safe(cell):  # Implement your actual logic
+                # Add your logic for checking if this cell is safe or not
+                if self.is_safe(cell):  # Assume this is defined elsewhere
                     self.safes.add(cell)
+
 
 
     def is_safe(self, cell):
@@ -137,6 +129,10 @@ class MinesweeperAI:
             return (
                 # Check surrounding cells and the knowledge base to determine if this cell can be considered safe
                 )
+
+
+
+
 
     def make_safe_move(self):
         """
