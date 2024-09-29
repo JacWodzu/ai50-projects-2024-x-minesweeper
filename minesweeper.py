@@ -111,21 +111,29 @@ class MinesweeperAI:
                     neighbors.add((i, j))
         return neighbors
 
-   def infer_new_knowledge(self):
-    # Copy sets to avoid modifying during iteration
-    known_mines = self.mines.copy()
-    known_safes = self.safes.copy()
+      def infer_new_knowledge(self):
+        new_mines = set()
+        new_safes = set()
     
-    # Process known mines
-    for mine in known_mines:
-        # Perform your logic with mines
-        # Example: if certain conditions are met, you might want to remove or add items
-        pass  # Replace with actual logic
+    # Iterate over a copy of the current known mines
+        for mine in self.mines.copy():
+        # Logic to infer new mines
+            if some_condition_for_mine:  # Replace with actual logic
+                new_mines.add(mine)
+    
+    # Iterate over a copy of the current known safes
+        for safe in self.safes.copy():
+        # Logic to infer new safes
+            if some_condition_for_safe:  # Replace with actual logic
+                new_safes.add(safe)
 
-    # Process known safes
-    for safe in known_safes:
-        # Perform your logic with safes
-        pass  # Replace with actual logic
+    # Update the main sets after iteration
+        for mine in new_mines:
+            self.mark_mine(mine)
+    
+        for safe in new_safes:
+            self.mark_safe(safe)
+
 
 
 
