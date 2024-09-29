@@ -76,11 +76,15 @@ class Sentence():
 
     def known_mines(self, ai):
         """ Returns the set of all cells in self.cells known to be mines. """
-        return {cell for cell in self.cells if cell in self.mines}
+        if len(self.cells) == self.count:
+            return set(self.cells)
+        return set()
 
     def known_safes(self, ai):
         """ Returns the set of all cells in self.cells known to be safe. """
-        return {cell for cell in self.cells if cell in self.safes}
+         if self.count == 0:
+            return set(self.cells)
+        return set()
 
     def count_mines(self, ai):
         """ Returns a set of known mines in the sentence. """
@@ -106,14 +110,9 @@ class Sentence():
     def mark_mine(self, cell):
         if cell in self.cells:
             self.cells.remove(cell)
-            self.count -= 1
+            self.count -= 1  # Decrement mine count
             
-        #if cell in self.cells:
-         #   self.cells.remove(cell)
-          #  self.count -= 1  # Decrease count of mines by 1
-           # self.count -= 1
-
-  #  def mark_safe(self, ai, cell):
+    
         """
         Updates internal knowledge representation given the fact that
         a cell is known to be safe.
@@ -121,11 +120,7 @@ class Sentence():
     def mark_safe(self, cell):
         if cell in self.cells:
             self.cells.remove(cell)
-            # No need to decrease count for safe
-        #if cell in self.cells:
-         #   self.cells.remove(cell)
-        # No decrement on count as a safe does not affect mine count
-        # No decrement on count as a safe does not affect mine count
+      
 
 #class MinesweeperAI():
     """
@@ -140,8 +135,7 @@ class MinesweeperAI():
         self.mines = set()
         self.safes = set()
         self.knowledge = []
-#@@ -150,103 +102,85 @@ def __init__(self, height=8, width=8):
-        #self.knowledge = []
+
 
     def mark_mine(self, cell):
         """ Mark a cell as a mine and update all sentences accordingly. """
@@ -156,106 +150,81 @@ class MinesweeperAI():
             sentence.mark_safe(cell)
 
     def add_knowledge(self, cell, count):
-        """ Updates knowledge based on the cell clicked and the count of mines around it. """
+        """
+        Called when the AI makes a move on a safe cell and knows how many mines surround it.
+        """
+        # Mark the cell as a safe move
         self.moves_made.add(cell)
         self.mark_safe(cell)
 
+        # Get neighboring cells
         neighbors = self.get_neighbors(cell)
         new_sentence_cells = neighbors - self.safes - self.mines
 
-        # Create a new sentence only if it has undetermined neighbors
+        # Add new sentence based on the revealed cell's neighboring mine count
         if new_sentence_cells:
             new_sentence = Sentence(new_sentence_cells, count)
             self.knowledge.append(new_sentence)
 
-        # Inference loop to update knowledge
+        # Inference: Update knowledge based on new information
         self.infer_new_knowledge()
         
-        #self.moves_made.add(cell)  # Mark the cell as moved
-        #self.mark_safe(cell)  # Mark the clicked cell as safe
-        # Get neighboring cells
-        #neighbors = self.get_neighbors(cell)
-        #new_sentence_cells = neighbors - self.safes - self.mines  # Exclude known safes and mines
-         # Create a new sentence if there are still undetermined neighbors
-        #if new_sentence_cells:
-         #   new_sentence = Sentence(new_sentence_cells, count)
-          #  self.knowledge.append(new_sentence)  # Add it to knowledge
-
-            # Check for new inferences immediately after adding the knowledge
-           # self.infer_new_knowledge()
-
-
-        # Get neighboring cells
-       # neighbors = self.get_neighbors(cell)
-        #new_sentence_cells = neighbors - self.safes - self.mines  # Exclude known safes and mines
-        #neighbors = neighbors - self.safes - self.mines
-
-        # Create a new sentence representing the current cell's neighbors and count
-        #new_sentence = Sentence(new_sentence_cells, count)
-        #self.knowledge.append(new_sentence)  # Add it to knowledge
-        #if len(neighbors) > 0:
-         #   self.knowledge.append(Sentence(neighbors, count))
-
-        # Check for new inferences
-        #self.infer_new_knowledge()
+   
+   
 
     def get_neighbors(self, cell):
-        """ Returns the set of neighboring cells for the given cell. """
-        """ Returns the set of neighboring cells for the given cell. """
+        """
+        Returns the set of neighboring cells for a given cell.
+        """
         neighbors = set()
-        for i in range(-1, 2):  # -1, 0, 1
-            for j in range(-1, 2):  # -1, 0, 1
-                if (i, j) != (0, 0):  # Exclude the cell itself
-                    ni, nj = cell[0] + i, cell[1] + j
-                    if 0 <= ni < self.height and 0 <= nj < self.width:
-                        neighbors.add((ni, nj))
-      #  return neighbors
-       # neighbors = set()
-        #for i in range(-1, 2):  # -1, 0, 1
-         #   for j in range(-1, 2):  # -1, 0, 1
-          #      if (i, j) != (0, 0):  # Exclude the cell itself
-        #for i in range(-1, 2):
-         #   for j in range(-1, 2):
-          #      if (i, j) != (0, 0):
-           #         ni, nj = cell[0] + i, cell[1] + j
-            #        if 0 <= ni < self.height and 0 <= nj < self.width:
-             #           neighbors.add((ni, nj))
-       # return neighbors
+        for i in range(cell[0] - 1, cell[0] + 2):
+            for j in range(cell[1] - 1, cell[1] + 2):
+                if (i, j) != cell and 0 <= i < self.height and 0 <= j < self.width:
+                    neighbors.add((i, j))
+        return neighbors
+
 
     def infer_new_knowledge(self):
         
-        """ Check knowledge base for new safe cells or mines and add sentences. """
+        """
+        Loops through the knowledge base to infer safe cells, mines, or new sentences.
+        """
         updated = True
         while updated:
             updated = False
 
+            # First pass: Identify known mines and safes
             for sentence in self.knowledge:
-                # Check for known mines
+                # Mark known mines
                 mines = sentence.known_mines()
-                for mine in mines:
-                    self.mark_mine(mine)
-                    updated = True
+                if mines:
+                    for mine in mines:
+                        if mine not in self.mines:
+                            self.mark_mine(mine)
+                            updated = True
 
-                # Check for known safes
+                # Mark known safes
                 safes = sentence.known_safes()
-                for safe in safes:
-                    self.mark_safe(safe)
-                    updated = True
+                if safes:
+                    for safe in safes:
+                        if safe not in self.safes:
+                            self.mark_safe(safe)
+                            updated = True
 
-            # Infer new sentences from subsets
-            for i in range(len(self.knowledge)):
-                for j in range(len(self.knowledge)):
-                    if i != j:
-                        sentence1 = self.knowledge[i]
-                        sentence2 = self.knowledge[j]
-                        if sentence1.cells.issubset(sentence2.cells):
-                            new_cells = sentence2.cells - sentence1.cells
-                            new_count = sentence2.count - sentence1.count
-                            if new_count >= 0 and new_cells:
-                                new_sentence = Sentence(new_cells, new_count)
-                                if new_sentence not in self.knowledge:
-                                    self.knowledge.append(new_sentence)
-                                    updated = True
+            # Second pass: Check for subset inference
+            for sentence1 in self.knowledge:
+                for sentence2 in self.knowledge:
+                    if sentence1 != sentence2 and sentence1.cells.issubset(sentence2.cells):
+                        inferred_cells = sentence2.cells - sentence1.cells
+                        inferred_count = sentence2.count - sentence1.count
+                        if inferred_cells:
+                            new_sentence = Sentence(inferred_cells, inferred_count)
+                            if new_sentence not in self.knowledge:
+                                self.knowledge.append(new_sentence)
+                                updated = True
+
+            # Remove any empty sentences
+            self.knowledge = [sentence for sentence in self.knowledge if sentence.cells]
 
 
     def make_safe_move(self):
@@ -269,10 +238,14 @@ class MinesweeperAI():
     
 
     def make_random_move(self):
-        """ Returns a random move that hasn't been made already and isn't a known mine. """
-        all_possible_moves = {(i, j) for i in range(self.height) for j in range(self.width)}
-        valid_moves = all_possible_moves - self.moves_made - self.mines
-        if valid_moves:
-            return random.choice(list(valid_moves))
-        return None  # No moves possible
+        """
+        Returns a random move to make on the board.
+        It avoids cells that are known to be mines or have already been clicked.
+        """
+        all_possible_moves = set(itertools.product(range(self.height), range(self.width)))
+        available_moves = list(all_possible_moves - self.moves_made - self.mines)
+
+        if available_moves:
+            return random.choice(available_moves)
+        return None
 
